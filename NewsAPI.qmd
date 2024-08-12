@@ -1,0 +1,42 @@
+---
+title: "News API"
+format: html
+editor: visual
+---
+
+## Top 10 "Data Science" Results since yesterday
+
+```{r, setup, echo = FALSE}
+library(httr2)
+queryNewsAPI <- function(q = "data science",
+                         from = Sys.Date() - 1,
+                         pageSize = 10,
+                         apiKey = Sys.getenv("NEWS_API_KEY")){
+  queryString <- glue::glue('`"{q}"`')
+
+  req <- request("https://newsapi.org/v2/everything") |>
+    req_url_query(
+      q = queryString,
+      from = Sys.Date() - 1,
+      pageSize = 10,
+      apiKey = Sys.getenv("NEWS_API_KEY")
+    )
+  resp <- req_perform(req)
+  resp_body_json(resp)
+}
+```
+
+```{r}
+articles <- queryNewsAPI()
+
+Articles <- articles$articles |> 
+  purrr::map(\(x)
+             htmltools::tagList(
+              htmltools::h2(x$title),
+              htmltools::h4("Author: ", x$author),
+              htmltools::p(x$description),
+              htmltools::a("Read more....", href = x$url)
+             ))
+
+htmltools::tagList(Articles)
+```
